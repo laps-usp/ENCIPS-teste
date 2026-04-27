@@ -1,1 +1,1094 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eixo Memória | LAPS — USP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
 
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin-bottom: 32px;
+      display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+    .filter-group label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--blue-500); }
+    .filter-group input,
+    .filter-group select {
+      background: var(--white); border: 1.5px solid var(--blue-100);
+      border-radius: var(--radius); padding: 9px 14px;
+      font-family: var(--font-body); font-size: 14px; color: var(--text-dark);
+      outline: none; transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .filter-group input:focus,
+    .filter-group select:focus { border-color: var(--blue-400); box-shadow: 0 0 0 3px rgba(59,111,212,.15); }
+    .filter-reset {
+      background: none; border: 1.5px solid var(--blue-300); border-radius: var(--radius);
+      padding: 9px 18px; font-family: var(--font-body); font-size: 13px; color: var(--blue-500);
+      cursor: pointer; font-weight: 500; align-self: flex-end;
+      transition: background var(--transition), color var(--transition);
+    }
+    .filter-reset:hover { background: var(--blue-500); color: var(--white); border-color: var(--blue-500); }
+
+    /* ── RESULTS BAR ── */
+    .results-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .results-count { font-size: 13px; color: var(--text-light); font-weight: 500; }
+    .results-count strong { color: var(--blue-500); }
+
+    /* ── VIEW TOGGLE ── */
+    .view-toggle { display: flex; gap: 6px; }
+    .view-btn {
+      background: none; border: 1.5px solid var(--blue-100); border-radius: var(--radius);
+      padding: 6px 12px; cursor: pointer; font-size: 16px; color: var(--blue-400);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .view-btn.active { background: var(--blue-500); border-color: var(--blue-500); color: var(--white); }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .video-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--blue-100);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition);
+      animation: fadeUp .4s ease both;
+    }
+    .video-card.hidden { display: none; }
+    .video-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* YouTube thumbnail */
+    .card-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--blue-900);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .card-thumb img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform var(--transition), opacity var(--transition);
+    }
+    .video-card:hover .card-thumb img { transform: scale(1.04); opacity: .85; }
+
+    .play-btn {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(10,22,40,.3);
+      transition: background var(--transition);
+    }
+    .video-card:hover .play-btn { background: rgba(10,22,40,.5); }
+    .play-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(255,255,255,.92);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,.3);
+      transition: transform var(--transition), background var(--transition);
+    }
+    .video-card:hover .play-icon { transform: scale(1.1); background: var(--white); }
+    .play-icon::after {
+      content: '';
+      border-left: 18px solid var(--blue-700);
+      border-top: 11px solid transparent;
+      border-bottom: 11px solid transparent;
+      margin-left: 4px;
+    }
+
+    .card-year-badge {
+      position: absolute; top: 10px; left: 10px;
+      background: var(--gold); color: var(--blue-900);
+      font-size: 11px; font-weight: 700; letter-spacing: .08em;
+      padding: 3px 9px; border-radius: 3px;
+    }
+
+    /* Card body */
+    .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+    .card-date {
+      font-size: 12px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--blue-400);
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 15px; font-weight: 700;
+      color: var(--text-dark); line-height: 1.4;
+    }
+
+    .card-meta { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+    .card-meta-row { display: flex; gap: 6px; align-items: baseline; font-size: 13px; }
+    .meta-label { color: var(--text-light); font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+    .meta-value { color: var(--text-mid); }
+
+    .card-filiacao {
+      font-size: 12px; color: var(--text-light); font-style: italic;
+      border-top: 1px solid var(--blue-50); padding-top: 10px; margin-top: auto;
+      line-height: 1.5;
+    }
+
+    .card-link-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--blue-500); color: var(--white);
+      padding: 9px 16px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 600;
+      transition: background var(--transition), transform var(--transition);
+      margin-top: 14px; align-self: flex-start;
+      text-decoration: none;
+    }
+    .card-link-btn:hover { background: var(--blue-400); transform: translateX(2px); }
+    .card-link-btn svg { flex-shrink: 0; }
+
+    /* ── LIST VIEW ── */
+    .list-view .cards-grid {
+      display: flex; flex-direction: column; gap: 0;
+    }
+    .list-view .video-card {
+      flex-direction: row; border-radius: 0;
+      border-bottom: 1px solid var(--blue-50);
+      border-left: none; border-right: none; border-top: none;
+      box-shadow: none;
+    }
+    .list-view .video-card:first-child { border-top: 1px solid var(--blue-100); border-radius: var(--radius) var(--radius) 0 0; }
+    .list-view .video-card:last-child  { border-radius: 0 0 var(--radius) var(--radius); }
+    .list-view .video-card:hover { transform: none; box-shadow: none; background: var(--blue-50); }
+    .list-view .card-thumb { width: 180px; min-width: 180px; aspect-ratio: auto; height: 110px; }
+    .list-view .card-body { padding: 14px 18px; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .list-view .card-date { min-width: 110px; }
+    .list-view .card-title { flex: 1; font-size: 14px; }
+    .list-view .card-meta { flex-direction: row; flex-wrap: wrap; gap: 12px; width: 100%; }
+    .list-view .card-filiacao { display: none; }
+    .list-view .card-link-btn { margin-top: 0; padding: 7px 12px; }
+    .list-view .play-icon { width: 36px; height: 36px; }
+    .list-view .play-icon::after { border-left-width: 12px; border-top-width: 7px; border-bottom-width: 7px; }
+
+    /* ── EMPTY ── */
+    .empty-state { padding: 60px 24px; text-align: center; display: none; }
+    .empty-state.visible { display: block; }
+    .empty-state strong { font-family: var(--font-display); font-size: 22px; color: var(--blue-400); display: block; margin-bottom: 8px; }
+    .empty-state p { color: var(--text-light); }
+
+    /* ── TABLE WRAP (wraps card grid + empty) ── */
+    .cards-wrap {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--blue-100);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      padding: 24px;
+    }
+    .list-view .cards-wrap { padding: 0; }
+
+    @media (max-width: 768px) {
+      .list-view .card-thumb { display: none; }
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header id="header">
+    <div class="header-inner">
+      <div class="header-usp"><span class="usp-label">Universidade de São Paulo</span></div>
+      <div class="header-brand">
+        <a href="index.html" class="brand-link">
+          <span class="brand-sigla">LAPS</span>
+          <span class="brand-divider"></span>
+          <span class="brand-nome">Laboratório de Pesquisa Social</span>
+        </a>
+      </div>
+      <div class="header-search">
+        <input type="search" placeholder="Buscar..." class="search-input" />
+        <button class="search-btn" aria-label="Buscar">&#9906;</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+      <ul class="nav-list" id="navList">
+        <li class="nav-item has-dropdown"><a href="sobre.html" class="nav-link">Sobre</a>
+          <ul class="dropdown"><li><a href="sobre.html#missao">Missão</a></li><li><a href="sobre.html#historia">História</a></li></ul>
+        </li>
+        <li class="nav-item"><a href="equipe.html" class="nav-link">Equipe</a></li>
+        <li class="nav-item has-dropdown"><a href="eixo-audiovisual.html" class="nav-link">Eixo Audiovisual</a>
+          <ul class="dropdown"><li><a href="eixo-audiovisual.html#projetos">Projetos</a></li></ul>
+        </li>
+        <li class="nav-item has-dropdown"><a href="eixo-metodos.html" class="nav-link">Eixo Métodos</a>
+          <ul class="dropdown"><li><a href="eixo-metodos.html#atividades">Atividades</a></li></ul>
+        </li>
+        <li class="nav-item has-dropdown"><a href="eixo-pesquisa.html" class="nav-link">Eixo Pesquisa</a>
+          <ul class="dropdown"><li><a href="eixo-pesquisa.html#projetos">Projetos</a></li></ul>
+        </li>
+        <li class="nav-item has-dropdown"><a href="eixo-memoria.html" class="nav-link active">Eixo Memória</a>
+          <ul class="dropdown">
+            <li><a href="#acervo">Acervo de Vídeos</a></li>
+            <li><a href="#sobre-eixo">Sobre o Eixo</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a href="encips.html" class="nav-link">ENCIPS</a></li>
+        <li class="nav-item"><a href="eventos.html" class="nav-link">Eventos</a></li>
+        <li class="nav-item"><a href="contato.html" class="nav-link">Contato</a></li>
+        <li class="nav-item"><a href="webmasters.html" class="nav-link">Webmasters</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="page-hero">
+    <div class="page-hero-content">
+      <p class="page-hero-eyebrow">LAPS — Laboratório de Pesquisa Social</p>
+      <h1>Eixo Memória</h1>
+      <p>Em atividade desde dezembro de 2024, o Eixo Memória LAPS difunde de modo didático os materiais audiovisuais resultantes das atividades do LAPS desde a sua criação.</p>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <section class="page-content" id="acervo">
+    <div class="container">
+
+      <div id="sobre-eixo" style="margin-bottom:40px;">
+        <h2 style="font-family:var(--font-display);font-size:clamp(22px,3vw,32px);font-weight:700;color:var(--blue-900);margin-bottom:10px;">Acervo Audiovisual</h2>
+        <div style="width:48px;height:3px;background:var(--gold);margin-bottom:14px;"></div>
+        <p style="color:var(--text-mid);max-width:680px;line-height:1.7;">
+          Seguem em ordem cronológica os vídeos disponíveis das atividades do LAPS. Use os filtros para explorar por ano, coordenação ou busca por título e autoria.
+        </p>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <div class="filter-group" style="flex:2;min-width:200px;">
+          <label for="searchInput">🔍 Buscar por título ou autor(a)</label>
+          <input type="search" id="searchInput" placeholder="Ex: etnografia, migração, gênero...">
+        </div>
+        <div class="filter-group">
+          <label for="filterAno">Ano</label>
+          <select id="filterAno">
+            <option value="">Todos os anos</option>
+            <option value="2014">2014</option>
+            <option value="2013">2013</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterCoord">Coordenação</label>
+          <select id="filterCoord">
+            <option value="">Todas</option>
+            <option value="Angela Alonso">Angela Alonso</option>
+            <option value="Fraya Frehse">Fraya Frehse</option>
+            <option value="Nadya Guimarães">Nadya Guimarães</option>
+            <option value="Vera Telles">Vera Telles</option>
+            <option value="Marco Alvarez">Marco Alvarez</option>
+            <option value="Leopoldo Waizbort">Leopoldo Waizbort</option>
+            <option value="Paula Marcelino">Paula Marcelino</option>
+            <option value="Luiz Jackson">Luiz Jackson</option>
+            <option value="Antonio Sergio Guimarães">Antonio Sergio Guimarães</option>
+            <option value="Ruy Braga">Ruy Braga</option>
+          </select>
+        </div>
+        <button class="filter-reset" id="resetBtn">✕ Limpar</button>
+      </div>
+
+      <!-- RESULTS BAR -->
+      <div class="results-bar">
+        <p class="results-count">Exibindo <strong id="countVisible">33</strong> de <strong>33</strong> vídeos</p>
+        <div class="view-toggle">
+          <button class="view-btn active" id="btnGrid" title="Grade" aria-label="Visualização em grade">⊞</button>
+          <button class="view-btn" id="btnList" title="Lista" aria-label="Visualização em lista">☰</button>
+        </div>
+      </div>
+
+      <!-- CARDS -->
+      <div id="cardsContainer">
+        <div class="cards-wrap">
+          <div class="cards-grid" id="cardsGrid">
+
+            <!-- ============================================================
+                 CARDS — ordem cronológica inversa (mais recente primeiro)
+                 data-year  = ano
+                 data-coord = coordenação (lowercase)
+                 data-search= título + autor para busca (lowercase)
+                 ============================================================ -->
+
+            <a href="https://youtu.be/1hSk3noLiJg?si=9CEUJSFOF_62JRxj" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2014" data-coord="angela alonso"
+               data-search="pesquisa sobre pentecostalismo no brasil ricardo mariano">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/1hSk3noLiJg/hqdefault.jpg" alt="Pesquisa sobre pentecostalismo no Brasil" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2014</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">01 dez. 2014 · 17h30</span>
+                <h3 class="card-title">Pesquisa sobre pentecostalismo no Brasil</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Ricardo Mariano</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
+                  Assistir no YouTube
+                </span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/0bPEYK59MYo?si=fILYi5hNl6EFUH0g" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2014" data-coord="fraya frehse"
+               data-search="o valor da pobreza no mercado turístico slums favelas townschips bianca freire-medeiros">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/0bPEYK59MYo/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2014</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">23 set. 2014 · 17h30</span>
+                <h3 class="card-title">O valor da pobreza no mercado turístico: Slums/Favelas/Townships</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Bianca Freire-Medeiros</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Fraya Frehse</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/tvPw9KxAhUQ?si=GO-mg0oe-Q-dWYvm" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2014" data-coord="angela alonso"
+               data-search="vem pra rua mas sem partido ambivalência partidária ativismo brasil ann mische">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/tvPw9KxAhUQ/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2014</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">04 ago. 2014 · 17h30</span>
+                <h3 class="card-title">"Vem pra rua, mas sem partido": ambivalência partidária e a reconfiguração do ativismo no Brasil</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Ann Mische</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — Universidade de Notre Dame (Indiana, EUA)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/BBrnIQnsiUQ?si=FlF5yhYPF33okoxg" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2014" data-coord=""
+               data-search="venturas desventuras pesquisar desigualdades globais rede desigualdades sergio costa">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/BBrnIQnsiUQ/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2014</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">27 mai. 2014 · 17h30</span>
+                <h3 class="card-title">Venturas e desventuras de pesquisar desigualdades globais: a experiencia da rede desigualdades.net</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Sergio Costa</span></div>
+                </div>
+                <p class="card-filiacao">Sociologia da América Latina — Freie Universität Berlin (Berlim, Alemanha)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/XaL3hLavU4Y?si=tZNxdgKw-q49pZtD" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2014" data-coord="angela alonso"
+               data-search="gênero trajetórias delitivas diferenças mundo crime perspectiva longitudinal ana vigna">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/XaL3hLavU4Y/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2014</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">23 abr. 2014 · 17h30</span>
+                <h3 class="card-title">Gênero e trajetórias delitivas: diferenças no mundo do crime a partir de uma perspectiva longitudinal</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Ana Vigna</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — Universidad de la República (Montevidéu, Uruguai)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/7Lf63LEJlC8?si=IZf-4g4y3su6SCcY" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2014" data-coord="angela alonso"
+               data-search="pesquisando megaeventos copa do mundo imagens brasil josé renato campos araújo">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/7Lf63LEJlC8/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2014</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">08 abr. 2014 · 17h30</span>
+                <h3 class="card-title">Pesquisando megaeventos: Copa do Mundo e Imagens do Brasil</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">José Renato de Campos Araújo</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Núcleo Interdisciplinar de Pesquisas Sobre Futebol e Modalidades Lúdicas — EACH-USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/HyoRp0QOgpY?si=4eKOV-sNFAfG-JJA" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2014" data-coord="angela alonso"
+               data-search="sociólogo etnógrafo narrador casos josé de souza martins">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/HyoRp0QOgpY/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2014</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">20 mar. 2014 · 17h30</span>
+                <h3 class="card-title">O sociólogo como etnógrafo e narrador de casos</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">José de Souza Martins</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/HniQ-EH4wIg?si=l9hwOutbmxApNuG3" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2014" data-coord="angela alonso"
+               data-search="etnografia sociologia fundamentos potencialidades fraya frehse">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/HniQ-EH4wIg/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2014</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">11 mar. 2014</span>
+                <h3 class="card-title">Etnografia na sociologia: Fundamentos e potencialidades</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Fraya Frehse</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/ocwr3wCQ1kc?si=Yso5kEbPebRr0LQP" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="vera telles"
+               data-search="resiliência continuidade mudança informalidade luís antonio machado">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/ocwr3wCQ1kc/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">26 nov. 2013 · 17h30</span>
+                <h3 class="card-title">Resiliência, continuidade e mudança de significado do termo informalidade</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Luís Antonio Machado</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Vera Telles</span></div>
+                </div>
+                <p class="card-filiacao">Instituto de Estudos Sociais e Políticos — UERJ (Rio de Janeiro, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/jdqQgpNRIFc?si=d21tEn64FRsOyquU" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="fraya frehse"
+               data-search="enredos sexuais luso-brasileiros josé machado pais">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/jdqQgpNRIFc/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">21 nov. 2013 · 17h30</span>
+                <h3 class="card-title">Enredos sexuais luso-brasileiros</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">José Machado Pais</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Fraya Frehse</span></div>
+                </div>
+                <p class="card-filiacao">Instituto de Ciências Sociais — Universidade de Lisboa (Lisboa, Portugal)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/6Z79OcqtBz0?si=P7nrP4DhOlrjTs2a" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="vera telles"
+               data-search="estética da ordem mercados indisciplinados fernando rabossi">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/6Z79OcqtBz0/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">18 nov. 2013 · 17h30</span>
+                <h3 class="card-title">A estética da ordem e os mercados indisciplinados</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Fernando Rabossi</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Vera Telles</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Antropologia Cultural — UFRJ (Rio de Janeiro, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/TnRk1rRjmTg?si=1KMsMY5UsW8R6k6v" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="paula marcelino"
+               data-search="processos exclusão criminalização classe operária frança mustapha el miri">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/TnRk1rRjmTg/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">07 nov. 2013 · 17h30</span>
+                <h3 class="card-title">Processos de exclusão e de criminalização da classe operária na França</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Mustapha El Miri</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Paula Marcelino</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — Universidade de Aix-Marseille (Marselha, França)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/lPl1kVdTAOo?si=HzjMG7WuBpNEAxyZ" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="vera telles"
+               data-search="meio carcerário produção delinquência observatório político antonio rafael barbosa">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/lPl1kVdTAOo/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">30 out. 2013 · 17h30</span>
+                <h3 class="card-title">O meio carcerário e a produção da delinquência como observatório político</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Antonio Rafael Barbosa</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Vera Telles</span></div>
+                </div>
+                <p class="card-filiacao">Instituto de Estudos Comparados em Administração de Conflitos — UFF (Niterói, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/6fJY43Ynnjk?si=M3_4k5l7VFMqZ0Cy" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="leopoldo waizbort"
+               data-search="aby warburg jorge ben leopoldo waizbort">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/6fJY43Ynnjk/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">22 out. 2013 · 17h30</span>
+                <h3 class="card-title">Aby Warburg e Jorge Ben</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Leopoldo Waizbort</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Leopoldo Waizbort</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/8Gz8Fw8NPgU?si=DUYKX_u4YcLf6W-H" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="marco alvarez"
+               data-search="pesquisas violência colômbia myriam jimeno">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/8Gz8Fw8NPgU/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">03 set. 2013 · 18h</span>
+                <h3 class="card-title">As pesquisas sobre violência na Colômbia</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Myriam Jimeno</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Marco Alvarez</span></div>
+                </div>
+                <p class="card-filiacao">Centro de Estudios Sociales — UNAL (Bogotá, Colômbia)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/uzgMpT_VQqA?si=CLMW7a7SNaPvjjw_" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="angela alonso"
+               data-search="esquecimento escravidão intelectuais dain borges">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/uzgMpT_VQqA/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">27 ago. 2013 · 17h30</span>
+                <h3 class="card-title">Do esquecimento da escravidão pelos intelectuais entre o 14 de maio de 1888 e 1933</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Dain Borges</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Department of History — University of Chicago (Chicago, EUA)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/cAXve5QwIdU?si=H2TB8mL0CujBH6Rg" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="nadya guimarães"
+               data-search="percursos pesquisa migrações fontes objetos minicurso sessão 3 mônica raisa schpun">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/cAXve5QwIdU/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">20 ago. 2013 · 17h30</span>
+                <h3 class="card-title">Percursos de pesquisa no estudo das migrações: entre fontes e objetos <small style="font-weight:300;color:var(--text-light);">(Minicurso — Sessão 3)</small></h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Mônica Raisa Schpun</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Nadya Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">CRBC/Mondes américains — EHESS (Paris, França)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/E3j_-aHe5g4?si=Zz-o8ugmV2TTTwFo" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="angela alonso"
+               data-search="arquivos interpretações oliveira vianna sociologia política brasil andré botelho">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/E3j_-aHe5g4/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">19 ago. 2013 · 17h30</span>
+                <h3 class="card-title">Entre arquivos e interpretações: Oliveira Vianna e a sociologia política no Brasil</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">André Botelho</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Instituto de Filosofia e Ciências Sociais — UFRJ (Rio de Janeiro, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/StV3S4KeSl8?si=tI9oENoopBjA1mQS" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="nadya guimarães"
+               data-search="percursos pesquisa migrações fontes objetos minicurso sessão 2 mônica raisa schpun">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/StV3S4KeSl8/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">12 ago. 2013 · 17h30</span>
+                <h3 class="card-title">Percursos de pesquisa no estudo das migrações: entre fontes e objetos <small style="font-weight:300;color:var(--text-light);">(Minicurso — Sessão 2)</small></h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Mônica Raisa Schpun</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Nadya Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">CRBC/Mondes américains — EHESS (Paris, França)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/r44dnmD6L3I?si=opRWQv5oi65aRREv" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="nadya guimarães"
+               data-search="percursos pesquisa migrações fontes objetos minicurso sessão 1 mônica raisa schpun">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/r44dnmD6L3I/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">05 ago. 2013 · 17h30</span>
+                <h3 class="card-title">Percursos de pesquisa no estudo das migrações: entre fontes e objetos <small style="font-weight:300;color:var(--text-light);">(Minicurso — Sessão 1)</small></h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Mônica Raisa Schpun</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Nadya Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">CRBC/Mondes américains — EHESS (Paris, França)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/BDYO_HpRRuI?si=DlLdfQFVeSJwi-pu" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="nadya guimarães"
+               data-search="entretiens biographiques perspective longitudinale parcours professionnels didier demazière">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/BDYO_HpRRuI/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">01 jul. 2013 · 17h30</span>
+                <h3 class="card-title">Entretiens biographiques et perspective longitudinale: les parcours professionnels et leurs interprétations</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Didier Demazière</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Nadya Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">CNRS (Paris, França)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/3zSQ0o9fVi8?si=vnZJYpG_QB81jxhq" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="nadya guimarães"
+               data-search="análise trajetórias mercado trabalho técnicas quantitativas qualitativas minicurso sessão 3 nadya guimarães">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/3zSQ0o9fVi8/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">24 jun. 2013 · 17h30</span>
+                <h3 class="card-title">A análise de trajetórias no mercado de trabalho — Técnicas quantitativas e qualitativas <small style="font-weight:300;color:var(--text-light);">(Minicurso — Sessão 3)</small></h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Nadya Guimarães</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Nadya Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/vfrP3cqjHn8?si=v4kJsQMxEvWIetJC" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="antonio sergio guimarães"
+               data-search="etnicidade raça américa latina metodologia edward telles">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/vfrP3cqjHn8/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">20 jun. 2013 · 17h30</span>
+                <h3 class="card-title">Etnicidade e raça na América Latina: a metodologia</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Edward Telles</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Antonio Sergio Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">Global Collaborative Network "Race and Citizenship in the Americas" — Princeton University (Princeton, NJ, EUA)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/xHerGiDCidI?si=ZpRdAYC_XtW5g6xV" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="nadya guimarães"
+               data-search="análise trajetórias mercado trabalho técnicas quantitativas qualitativas nadya guimarães">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/xHerGiDCidI/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">10 jun. 2013 · 17h30</span>
+                <h3 class="card-title">A análise de trajetórias no mercado de trabalho — Técnicas quantitativas e qualitativas <small style="font-weight:300;color:var(--text-light);">(Minicurso — Sessão 2)</small></h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Nadya Guimarães</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Nadya Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/rNEwYIrxBRg?si=1lbjD4q9hwyIvKzO" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="marco alvarez"
+               data-search="pesquisa histórica sociedade imperial higienismo alienismo flávio edler">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/rNEwYIrxBRg/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">04 jun. 2013 · 17h30</span>
+                <h3 class="card-title">Pesquisa histórica sobre a sociedade imperial: higienismo e alienismo revisitados</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Flávio Edler</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Marco Alvarez</span></div>
+                </div>
+                <p class="card-filiacao">Casa de Oswaldo Cruz (Rio de Janeiro, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/Df1C9N7ITrY?si=tAbnaPsKZ7zHDY8t" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="nadya guimarães"
+               data-search="análise trajetórias mercado trabalho técnicas quantitativas qualitativas minicurso sessão 1 nadya guimarães">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/Df1C9N7ITrY/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">03 jun. 2013 · 17h30</span>
+                <h3 class="card-title">A análise de trajetórias no mercado de trabalho — Técnicas quantitativas e qualitativas <small style="font-weight:300;color:var(--text-light);">(Minicurso — Sessão 1)</small></h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Nadya Guimarães</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Nadya Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Sociologia — USP (São Paulo, Brasil)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/cBNEW0Hi8Is?si=k9Cd-DtuI-sMqkyR" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="vera telles"
+               data-search="difusão forma empresa sociedade contemporânea empreendedorismo valor social osvaldo javier lopez-ruiz">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/cBNEW0Hi8Is/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">27 mai. 2013 · 17h30</span>
+                <h3 class="card-title">A difusão da forma empresa na sociedade contemporânea: o empreendedorismo como valor social</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Osvaldo Javier Lopez-Ruiz</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Vera Telles</span></div>
+                </div>
+                <p class="card-filiacao">Instituto de Ciencias Humanas, Sociales y Ambientales — CONICET (Buenos Aires, Argentina)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/aZsoTHIhr34?si=LJg3-saYlLE--NjU" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="luiz jackson"
+               data-search="trayectorias intelectuales perspectiva comparada alejandro blanco">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/aZsoTHIhr34/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">23 mai. 2013 · 17h30</span>
+                <h3 class="card-title">Trayectorias intelectuales en perspectiva comparada: desafíos analíticos, potencialidades y límites</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Alejandro Blanco</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Luiz Jackson</span></div>
+                </div>
+                <p class="card-filiacao">Departamento de Ciências Sociais — UNQ (Bernal, Argentina)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/RjFk60E6vb4?si=ldPp2drwV0A0X7D0" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="angela alonso"
+               data-search="sport mega-events hosting capacity environmental sustainability brazil john karamichas">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/RjFk60E6vb4/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">20 mai. 2013 · 17h30</span>
+                <h3 class="card-title">Sport mega-events hosting and capacity for environmental sustainability: Past experience and Brazil prospects</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">John Karamichas</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Angela Alonso</span></div>
+                </div>
+                <p class="card-filiacao">Faculty of Arts, Humanities and Social Sciences — Queen's University de Belfast (Belfast, Irlanda)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/9nduaep8JMA?si=PHc85nvNOJT49xxN" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="nadya guimarães"
+               data-search="gênero trabalho identidades salões beleza luz arango">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/9nduaep8JMA/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">08 mai. 2013 · 17h30</span>
+                <h3 class="card-title">Gênero, trabalho e identidades nos salões de beleza</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Luz Arango</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Nadya Guimarães</span></div>
+                </div>
+                <p class="card-filiacao">Escuela de Estudios de Género — UNAL (Bogotá, Colômbia)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+            <a href="https://youtu.be/y4vmlTu5hRc?si=U9f39839zNNYQAK7" target="_blank" rel="noopener"
+               class="video-card"
+               data-year="2013" data-coord="ruy braga"
+               data-search="conferência michel cahen">
+              <div class="card-thumb">
+                <img src="https://img.youtube.com/vi/y4vmlTu5hRc/hqdefault.jpg" alt="" loading="lazy" />
+                <div class="play-btn"><div class="play-icon"></div></div>
+                <span class="card-year-badge">2013</span>
+              </div>
+              <div class="card-body">
+                <span class="card-date">18 abr. 2013 · 17h30</span>
+                <h3 class="card-title">Conferência Michel Cahen</h3>
+                <div class="card-meta">
+                  <div class="card-meta-row"><span class="meta-label">Autoria:</span><span class="meta-value">Michel Cahen</span></div>
+                  <div class="card-meta-row"><span class="meta-label">Coord.:</span><span class="meta-value">Ruy Braga</span></div>
+                </div>
+                <p class="card-filiacao">CNRS (Paris, França)</p>
+                <span class="card-link-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>Assistir no YouTube</span>
+              </div>
+            </a>
+
+          </div><!-- /.cards-grid -->
+
+          <div class="empty-state" id="emptyState">
+            <strong>Nenhum vídeo encontrado</strong>
+            <p>Tente ajustar os filtros ou limpar a busca.</p>
+          </div>
+        </div><!-- /.cards-wrap -->
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer id="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="brand-sigla">LAPS</span>
+        <span class="footer-nome">Laboratório de Pesquisa Social</span>
+        <span class="footer-usp">Universidade de São Paulo</span>
+      </div>
+      <div class="footer-links">
+        <h4>Navegação</h4>
+        <ul>
+          <li><a href="sobre.html">Sobre</a></li>
+          <li><a href="equipe.html">Equipe</a></li>
+          <li><a href="eventos.html">Eventos</a></li>
+          <li><a href="contato.html">Contato</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Eixos</h4>
+        <ul>
+          <li><a href="eixo-audiovisual.html">Audiovisual</a></li>
+          <li><a href="eixo-metodos.html">Métodos</a></li>
+          <li><a href="eixo-pesquisa.html">Pesquisa</a></li>
+          <li><a href="eixo-memoria.html">Memória</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h4>Contato</h4>
+        <p>Departamento de Sociologia<br/>FFLCH — USP<br/>São Paulo, SP</p>
+        <a href="contato.html">laps@usp.br</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 LAPS — Laboratório de Pesquisa Social · USP</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    const cards      = Array.from(document.querySelectorAll('.video-card'));
+    const total      = cards.length;
+    const searchIn   = document.getElementById('searchInput');
+    const filterAno  = document.getElementById('filterAno');
+    const filterCoord= document.getElementById('filterCoord');
+    const resetBtn   = document.getElementById('resetBtn');
+    const countEl    = document.getElementById('countVisible');
+    const emptyEl    = document.getElementById('emptyState');
+    const btnGrid    = document.getElementById('btnGrid');
+    const btnList    = document.getElementById('btnList');
+    const container  = document.getElementById('cardsContainer');
+
+    function applyFilters() {
+      const s    = searchIn.value.toLowerCase().trim();
+      const ano  = filterAno.value;
+      const coord= filterCoord.value.toLowerCase();
+      let vis = 0;
+
+      cards.forEach(card => {
+        const matchS = !s    || card.dataset.search.includes(s);
+        const matchA = !ano  || card.dataset.year === ano;
+        const matchC = !coord|| card.dataset.coord.includes(coord.split(' ')[0]);
+
+        if (matchS && matchA && matchC) { card.classList.remove('hidden'); vis++; }
+        else card.classList.add('hidden');
+      });
+
+      countEl.textContent = vis;
+      emptyEl.classList.toggle('visible', vis === 0);
+    }
+
+    searchIn.addEventListener('input',   applyFilters);
+    filterAno.addEventListener('change', applyFilters);
+    filterCoord.addEventListener('change', applyFilters);
+    resetBtn.addEventListener('click', () => {
+      searchIn.value = filterAno.value = filterCoord.value = '';
+      applyFilters();
+    });
+
+    // View toggle
+    btnGrid.addEventListener('click', () => {
+      container.classList.remove('list-view');
+      btnGrid.classList.add('active');
+      btnList.classList.remove('active');
+    });
+    btnList.addEventListener('click', () => {
+      container.classList.add('list-view');
+      btnList.classList.add('active');
+      btnGrid.classList.remove('active');
+    });
+
+    // Init count
+    countEl.textContent = total;
+  </script>
+</body>
+</html>
