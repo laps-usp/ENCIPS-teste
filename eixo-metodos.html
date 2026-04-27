@@ -1,1 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eixo Métodos | LAPS — USP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ── ORG TAGS ── */
+    .org-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .org-tag {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      letter-spacing: .04em; padding: 3px 9px; border-radius: 3px;
+      white-space: nowrap; color: #fff;
+    }
+    .tag-metodos   { background: #2952a3; }
+    .tag-nupepa    { background: #7b3fa0; }
+    .tag-laps      { background: #1a7a5e; }
+    .tag-icnova    { background: #8a4a00; }
+    .tag-ppgs      { background: #2a5a8a; }
+    .tag-gpseec    { background: #b85c00; }
+    .tag-gems      { background: #c0392b; }
+    .tag-urbandata { background: #0e6b8a; }
+    .tag-luta      { background: #8a1a1a; }
+    .tag-pet       { background: #3d7a1a; }
+    .tag-cnpq      { background: #4a3d8a; }
+    .tag-nev       { background: #6b5a00; }
+    .tag-gesac     { background: #005f6b; }
+    .tag-nepseste  { background: #1a5a2a; }
+    .tag-other     { background: #5a5a6a; }
 
+    .badge-cancelado {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em;
+      background: #c0392b; color: #fff;
+      padding: 2px 7px; border-radius: 3px; margin-left: 6px; vertical-align: middle;
+    }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      background: var(--blue-50);
+      border: 1px solid var(--blue-100);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 28px;
+      display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+    .filter-group label {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      font-weight: 600; color: var(--blue-500);
+    }
+    .filter-group input,
+    .filter-group select {
+      background: var(--white); border: 1.5px solid var(--blue-100);
+      border-radius: var(--radius); padding: 9px 14px;
+      font-family: var(--font-body); font-size: 14px; color: var(--text-dark);
+      outline: none; transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .filter-group input:focus,
+    .filter-group select:focus {
+      border-color: var(--blue-400);
+      box-shadow: 0 0 0 3px rgba(59,111,212,.15);
+    }
+    .filter-reset {
+      background: none; border: 1.5px solid var(--blue-300);
+      border-radius: var(--radius); padding: 9px 18px;
+      font-family: var(--font-body); font-size: 13px; color: var(--blue-500);
+      cursor: pointer; font-weight: 500; align-self: flex-end;
+      transition: background var(--transition), color var(--transition);
+    }
+    .filter-reset:hover { background: var(--blue-500); color: var(--white); border-color: var(--blue-500); }
+
+    /* ── RESULTS ── */
+    .results-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .results-count { font-size: 13px; color: var(--text-light); font-weight: 500; }
+    .results-count strong { color: var(--blue-500); }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--white); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden;
+      border: 1px solid var(--blue-100);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead { background: var(--blue-900); }
+    thead th {
+      padding: 16px 18px; text-align: left; font-size: 11px;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--blue-100); font-weight: 600; cursor: pointer;
+      white-space: nowrap; user-select: none;
+      transition: background var(--transition);
+    }
+    thead th:hover { background: var(--blue-800); }
+    thead th.sorted-asc::after  { content: ' ↑'; color: var(--gold); }
+    thead th.sorted-desc::after { content: ' ↓'; color: var(--gold); }
+    tbody tr { border-bottom: 1px solid var(--blue-50); transition: background var(--transition); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--blue-50); }
+    tbody tr.hidden { display: none; }
+    td { padding: 15px 18px; vertical-align: middle; color: var(--text-mid); line-height: 1.5; }
+    .td-num { font-weight: 700; color: var(--blue-400); font-size: 13px; width: 40px; }
+    .td-title { font-weight: 500; color: var(--text-dark); min-width: 280px; }
+    .td-title small { font-weight: 300; color: var(--text-light); font-size: 12px; display: block; margin-top: 2px; font-style: italic; }
+    .td-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .td-time { white-space: nowrap; font-size: 13px; color: var(--text-light); }
+    tbody tr.cancelado td { opacity: .5; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { padding: 60px 24px; text-align: center; display: none; }
+    .empty-state.visible { display: block; }
+    .empty-state strong { font-family: var(--font-display); font-size: 22px; color: var(--blue-400); display: block; margin-bottom: 8px; }
+    .empty-state p { color: var(--text-light); }
+
+    /* ── LEGEND ── */
+    .legend {
+      margin-top: 28px; padding: 20px 24px;
+      background: var(--blue-50); border-radius: var(--radius);
+      border: 1px solid var(--blue-100);
+    }
+    .legend h4 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--blue-500); margin-bottom: 12px; }
+    .legend-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    @media (max-width: 900px) {
+      .filter-bar { flex-direction: column; }
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 700px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header id="header">
+    <div class="header-inner">
+      <div class="header-usp"><span class="usp-label">Universidade de São Paulo</span></div>
+      <div class="header-brand">
+        <a href="index.html" class="brand-link">
+          <span class="brand-sigla">LAPS</span>
+          <span class="brand-divider"></span>
+          <span class="brand-nome">Laboratório de Pesquisa Social</span>
+        </a>
+      </div>
+      <div class="header-search">
+        <input type="search" placeholder="Buscar..." class="search-input" />
+        <button class="search-btn" aria-label="Buscar">&#9906;</button>
+      </div>
+    </div>
+  </header>
+
+  <nav id="navbar">
+    <div class="nav-inner">
+      <button class="nav-toggle" id="navToggle"><span></span><span></span><span></span></button>
+      <ul class="nav-list" id="navList">
+        <li class="nav-item has-dropdown"><a href="sobre.html" class="nav-link">Sobre</a>
+          <ul class="dropdown"><li><a href="sobre.html#missao">Missão</a></li><li><a href="sobre.html#historia">História</a></li></ul>
+        </li>
+        <li class="nav-item"><a href="equipe.html" class="nav-link">Equipe</a></li>
+        <li class="nav-item has-dropdown"><a href="eixo-audiovisual.html" class="nav-link">Eixo Audiovisual</a>
+          <ul class="dropdown"><li><a href="eixo-audiovisual.html#projetos">Projetos</a></li></ul>
+        </li>
+        <li class="nav-item has-dropdown"><a href="eixo-metodos.html" class="nav-link active">Eixo Métodos</a>
+          <ul class="dropdown"><li><a href="#atividades">Histórico de Atividades</a></li></ul>
+        </li>
+        <li class="nav-item has-dropdown"><a href="eixo-pesquisa.html" class="nav-link">Eixo Pesquisa</a>
+          <ul class="dropdown"><li><a href="eixo-pesquisa.html#projetos">Projetos</a></li></ul>
+        </li>
+        <li class="nav-item has-dropdown"><a href="eixo-memoria.html" class="nav-link">Eixo Memória</a>
+          <ul class="dropdown"><li><a href="eixo-memoria.html#acervo">Acervo</a></li></ul>
+        </li>
+        <li class="nav-item"><a href="encips.html" class="nav-link">ENCIPS</a></li>
+        <li class="nav-item"><a href="eventos.html" class="nav-link">Eventos</a></li>
+        <li class="nav-item"><a href="contato.html" class="nav-link">Contato</a></li>
+        <li class="nav-item"><a href="webmasters.html" class="nav-link">Webmasters</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <div class="page-hero-content">
+      <p class="page-hero-eyebrow">LAPS — Laboratório de Pesquisa Social</p>
+      <h1>Eixo Métodos</h1>
+      <p>Em atividade desde março de 2025, o Eixo Métodos promove iniciativas metodológicas formativas ligadas às disciplinas de Métodos e Técnicas de Pesquisa (I, II e III) do DS e do Programa de Pós-Graduação em Sociologia (PPGS).</p>
+    </div>
+  </div>
+
+  <section class="page-content" id="atividades">
+    <div class="container">
+
+      <div style="margin-bottom:36px;">
+        <h2 style="font-family:var(--font-display);font-size:clamp(22px,3vw,32px);font-weight:700;color:var(--blue-900);margin-bottom:10px;">Histórico de Atividades — 2025</h2>
+        <div style="width:48px;height:3px;background:var(--gold);margin-bottom:14px;"></div>
+        <p style="color:var(--text-mid);max-width:680px;line-height:1.7;">Relação completa das atividades realizadas e programadas ao longo de 2025 no âmbito do Eixo Métodos e iniciativas parceiras. Use os filtros para explorar por tipo, organização ou período.</p>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="filter-bar">
+        <div class="filter-group" style="flex:2;min-width:220px;">
+          <label for="searchInput">🔍 Buscar por título</label>
+          <input type="search" id="searchInput" placeholder="Digite para filtrar...">
+        </div>
+        <div class="filter-group">
+          <label for="filterTipo">Tipo de atividade</label>
+          <select id="filterTipo">
+            <option value="">Todos os tipos</option>
+            <option value="Oficina">Oficina</option>
+            <option value="Minicurso">Minicurso</option>
+            <option value="Seminário">Seminário</option>
+            <option value="Masterclass">Masterclass</option>
+            <option value="Ciclo">Ciclo</option>
+            <option value="Lançamento">Lançamento</option>
+            <option value="Exibição">Exibição / Filme</option>
+            <option value="Festival">Festival / Mostra</option>
+            <option value="Workshop">Workshop</option>
+            <option value="Palestra">Palestra / Apresentação</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterOrg">Organização</label>
+          <select id="filterOrg">
+            <option value="">Todas as organizações</option>
+            <option value="eixo métodos">Eixo Métodos</option>
+            <option value="nupepa">NUPEPA / ImaRgens</option>
+            <option value="laps">LAPS</option>
+            <option value="icnova">ICNOVA</option>
+            <option value="ppgs">PPGS/USP</option>
+            <option value="gpseec">GPSEEC</option>
+            <option value="gems">GEMS</option>
+            <option value="urbandata">UrbanData</option>
+            <option value="grupo luta">Grupo Luta</option>
+            <option value="pet">PET Ciências Sociais</option>
+            <option value="cnpq">Grupo CNPq</option>
+            <option value="nev">NEV</option>
+            <option value="gesac">GESAC</option>
+            <option value="nepseste">NEPSESTE</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterMes">Mês</label>
+          <select id="filterMes">
+            <option value="">Todos os meses</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+          </select>
+        </div>
+        <button class="filter-reset" id="resetBtn">✕ Limpar filtros</button>
+      </div>
+
+      <div class="results-bar">
+        <p class="results-count">Exibindo <strong id="countVisible">31</strong> de <strong>31</strong> atividades</p>
+      </div>
+
+      <div class="table-wrap">
+        <table id="atividadesTable">
+          <thead>
+            <tr>
+              <th data-col="0">#</th>
+              <th data-col="1">Título da Atividade</th>
+              <th data-col="2">Data(s)</th>
+              <th data-col="3">Horário</th>
+              <th data-col="4">Organização</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+
+            <tr data-month="02" data-org="nupepa icnova laps" data-tipo="Minicurso">
+              <td class="td-num">1</td>
+              <td class="td-title">Minicurso de IA e Audiovisual NUPEPA</td>
+              <td class="td-date">26/02</td>
+              <td class="td-time">18h–21h</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span></div></td>
+            </tr>
+
+            <tr data-month="03 07" data-org="nupepa icnova laps ppgs" data-tipo="Oficina">
+              <td class="td-num">2</td>
+              <td class="td-title">11ª Oficina do NUPEPA: Oficina Extensiva</td>
+              <td class="td-date">03/11 – 01/07</td>
+              <td class="td-time">16h–18h15</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span><span class="org-tag tag-ppgs">PPGS/USP</span></div></td>
+            </tr>
+
+            <tr data-month="03" data-org="eixo métodos" data-tipo="Oficina">
+              <td class="td-num">3</td>
+              <td class="td-title">MÉTODOS – Oficina: Como construir hipóteses de pesquisa?</td>
+              <td class="td-date">20/03</td>
+              <td class="td-time">17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-metodos">Eixo Métodos</span></div></td>
+            </tr>
+
+            <tr data-month="04" data-org="gpseec" data-tipo="Workshop">
+              <td class="td-num">4</td>
+              <td class="td-title">Multidisciplinary workshop on the topic of politicization of public health and populism during crises in general</td>
+              <td class="td-date">08/04</td>
+              <td class="td-time">18h–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-gpseec">GPSEEC</span></div></td>
+            </tr>
+
+            <tr data-month="04" data-org="nupepa icnova laps" data-tipo="Oficina">
+              <td class="td-num">5</td>
+              <td class="td-title">1ª Mini Oficina de Gestão de Prompts e Conteúdo. NUPEPA</td>
+              <td class="td-date">10/04, 17/04</td>
+              <td class="td-time">18h–21h</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span></div></td>
+            </tr>
+
+            <tr data-month="04" data-org="gems" data-tipo="Exibição">
+              <td class="td-num">6</td>
+              <td class="td-title">Exibição + debate do filme <em>Intervenção</em></td>
+              <td class="td-date">23/04</td>
+              <td class="td-time">18h–21h</td>
+              <td><div class="org-tags"><span class="org-tag tag-gems">GEMS</span></div></td>
+            </tr>
+
+            <tr data-month="04" data-org="nupepa icnova laps" data-tipo="Lançamento">
+              <td class="td-num">7</td>
+              <td class="td-title">Lançamento do Relatório "Inteligência Artificial nas Ciências Sociais e Humanas: usos, reflexões e impacto na intersecção com o audiovisual no Brasil"
+                <small>em parceria com LAPS/USP</small></td>
+              <td class="td-date">24/04</td>
+              <td class="td-time">11h–13h</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span></div></td>
+            </tr>
+
+            <tr data-month="04" data-org="eixo métodos" data-tipo="Oficina">
+              <td class="td-num">8</td>
+              <td class="td-title">MÉTODOS – Oficina: Observação participante e suas variantes na Sociologia</td>
+              <td class="td-date">24/04</td>
+              <td class="td-time">17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-metodos">Eixo Métodos</span></div></td>
+            </tr>
+
+            <tr data-month="05" data-org="fraya frehse" data-tipo="Palestra">
+              <td class="td-num">9</td>
+              <td class="td-title">Vínculo social e aspirações em um bairro popular de São Paulo: Resultados de uma pesquisa coletiva exploratória</td>
+              <td class="td-date">21/05</td>
+              <td class="td-time">18h–20h</td>
+              <td><div class="org-tags"><span class="org-tag tag-other">Fraya Frehse</span></div></td>
+            </tr>
+
+            <tr data-month="05" data-org="nupepa icnova laps ppgs" data-tipo="Masterclass">
+              <td class="td-num">10</td>
+              <td class="td-title">Masterclass NUPEPA: Documentário e lugares de pesquisa: ruídos, fabulações críticas e grafias sensíveis</td>
+              <td class="td-date">28/05</td>
+              <td class="td-time">14h–17h</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span><span class="org-tag tag-ppgs">PPGS/USP</span></div></td>
+            </tr>
+
+            <tr data-month="05" data-org="urbandata" data-tipo="Oficina">
+              <td class="td-num">11</td>
+              <td class="td-title">Oficina sobre a base de dados bibliográfica do UrbanData
+                <small>consulta, geração de cruzamentos e inserção de dados</small></td>
+              <td class="td-date">29/05</td>
+              <td class="td-time">18h–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-urbandata">UrbanData</span></div></td>
+            </tr>
+
+            <tr data-month="06" data-org="grupo luta" data-tipo="Palestra">
+              <td class="td-num">12</td>
+              <td class="td-title">Mudanças tecnológicas, trabalho e demandas de gênero no setor industrial</td>
+              <td class="td-date">03/06</td>
+              <td class="td-time">18h–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-luta">Grupo Luta</span></div></td>
+            </tr>
+
+            <tr data-month="06" data-org="eixo audiovisual" data-tipo="Exibição">
+              <td class="td-num">13</td>
+              <td class="td-title">Pré-exibição do documentário "1987"</td>
+              <td class="td-date">04/06</td>
+              <td class="td-time">18h–20h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-other">Eixo Audiovisual</span></div></td>
+            </tr>
+
+            <tr data-month="06" data-org="pet" data-tipo="Palestra">
+              <td class="td-num">14</td>
+              <td class="td-title">Primeiras Pesquisas: Perfil das/dos/des ingressantes em Ciências Sociais na USP: três explorações</td>
+              <td class="td-date">05/06</td>
+              <td class="td-time">18h–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-pet">PET Ciências Sociais</span></div></td>
+            </tr>
+
+            <tr data-month="06" data-org="eixo métodos" data-tipo="Oficina">
+              <td class="td-num">15</td>
+              <td class="td-title">MÉTODOS – Oficina: Pesquisa por questionário: possibilidades e limites</td>
+              <td class="td-date">26/06</td>
+              <td class="td-time">17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-metodos">Eixo Métodos</span></div></td>
+            </tr>
+
+            <tr data-month="08" data-org="eixo métodos" data-tipo="Oficina">
+              <td class="td-num">16</td>
+              <td class="td-title">MÉTODOS – Oficina: Política em Movimento: Métodos para Estudo de Protestos ao Longo do Tempo</td>
+              <td class="td-date">21/08</td>
+              <td class="td-time">17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-metodos">Eixo Métodos</span></div></td>
+            </tr>
+
+            <tr data-month="08" data-org="nupepa icnova laps ppgs" data-tipo="Seminário">
+              <td class="td-num">17</td>
+              <td class="td-title">2° Seminário Imagem em Movimento NUPEPA</td>
+              <td class="td-date">25–28/08</td>
+              <td class="td-time">Dia inteiro</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span><span class="org-tag tag-ppgs">PPGS/USP</span></div></td>
+            </tr>
+
+            <tr data-month="09" data-org="eixo métodos" data-tipo="Ciclo">
+              <td class="td-num">18</td>
+              <td class="td-title">IV Métodos em Ação – A USP ao 90: Rotinas, Memórias e Espacialidades</td>
+              <td class="td-date">11/09, 18/09, 25/09</td>
+              <td class="td-time">17h30–19h</td>
+              <td><div class="org-tags"><span class="org-tag tag-metodos">Eixo Métodos</span></div></td>
+            </tr>
+
+            <tr data-month="09 10 11" data-org="cnpq" data-tipo="Ciclo">
+              <td class="td-num">19</td>
+              <td class="td-title">Ciclo de Oficinas em Sociologia Digital e Inteligência Artificial</td>
+              <td class="td-date">11/09, 23/10, 13/11, 27/11</td>
+              <td class="td-time">18h–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-cnpq">Grupo CNPq</span></div></td>
+            </tr>
+
+            <tr data-month="09" data-org="eixo métodos" data-tipo="Seminário">
+              <td class="td-num">20</td>
+              <td class="td-title">MÉTODOS – Seminário: IV Métodos em Ação</td>
+              <td class="td-date">18/09, 25/09</td>
+              <td class="td-time">17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-metodos">Eixo Métodos</span></div></td>
+            </tr>
+
+            <tr data-month="09" data-org="grupo luta" data-tipo="Palestra">
+              <td class="td-num">21</td>
+              <td class="td-title">Unidade na Diversidade: Teoria da reprodução social e o feminismo para os 99%</td>
+              <td class="td-date">23/09</td>
+              <td class="td-time">17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-luta">Grupo Luta</span></div></td>
+            </tr>
+
+            <tr data-month="09" data-org="nupepa icnova laps ppgs" data-tipo="Exibição" class="cancelado">
+              <td class="td-num">22</td>
+              <td class="td-title">SOCIO-CINEMA NUPEPA: Cinedebate Sociologia e Cinema <span class="badge-cancelado">CANCELADO</span>
+                <small>cancelado em razão de dificuldades do debatedor convidado</small></td>
+              <td class="td-date">24/09</td>
+              <td class="td-time">18h–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span><span class="org-tag tag-ppgs">PPGS/USP</span></div></td>
+            </tr>
+
+            <tr data-month="09 10 11" data-org="gesac" data-tipo="Ciclo">
+              <td class="td-num">23</td>
+              <td class="td-title">Explorando a Vida Cotidiana de um Bairro Popular: Objetivação, teorias e métodos</td>
+              <td class="td-date">29/09, 29/10, 10/11</td>
+              <td class="td-time">14h–16h / 17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-gesac">GESAC</span><span class="org-tag tag-other">IRL 2034</span></div></td>
+            </tr>
+
+            <tr data-month="10" data-org="nupepa icnova laps ppgs" data-tipo="Oficina">
+              <td class="td-num">24</td>
+              <td class="td-title">2ª Oficina de Inteligência Artificial para Produtores e Pesquisadores em Audiovisual e Ciências Sociais do NUPEPA/ImaRgens</td>
+              <td class="td-date">06, 07, 13, 14/10</td>
+              <td class="td-time">19h–22h</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span><span class="org-tag tag-ppgs">PPGS/USP</span></div></td>
+            </tr>
+
+            <tr data-month="10 11" data-org="nev" data-tipo="Ciclo">
+              <td class="td-num">25</td>
+              <td class="td-title">Pesquisa Documental nas Ciências Sociais</td>
+              <td class="td-date">09/10, 30/10, 06/11</td>
+              <td class="td-time">18h–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-nev">NEV</span></div></td>
+            </tr>
+
+            <tr data-month="10" data-org="eixo métodos" data-tipo="Oficina">
+              <td class="td-num">26</td>
+              <td class="td-title">MÉTODOS – Oficina: Análise de Discurso e Processos Políticos: Teoria e Prática</td>
+              <td class="td-date">06/10</td>
+              <td class="td-time">17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-metodos">Eixo Métodos</span></div></td>
+            </tr>
+
+            <tr data-month="10" data-org="nepseste" data-tipo="Palestra">
+              <td class="td-num">27</td>
+              <td class="td-title">A Teoria da Produção Social de Henri Lefebvre: Explorando um planeta em urbanização
+                <small>em inglês</small></td>
+              <td class="td-date">21/10</td>
+              <td class="td-time">18h–20h</td>
+              <td><div class="org-tags"><span class="org-tag tag-nepseste">NEPSESTE</span></div></td>
+            </tr>
+
+            <tr data-month="10" data-org="grupo luta" data-tipo="Palestra">
+              <td class="td-num">28</td>
+              <td class="td-title">Capital e Produção da Vida: Crise da reprodução social e suas interpretações</td>
+              <td class="td-date">27/10</td>
+              <td class="td-time">17h30–19h</td>
+              <td><div class="org-tags"><span class="org-tag tag-luta">Grupo Luta</span></div></td>
+            </tr>
+
+            <tr data-month="11" data-org="nupepa icnova laps ppgs" data-tipo="Festival">
+              <td class="td-num">29</td>
+              <td class="td-title">8° Festival e Mostra do NUPEPA + Mesa-Redonda sobre Inteligência Artificial</td>
+              <td class="td-date">18/11</td>
+              <td class="td-time">10h–22h</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span><span class="org-tag tag-ppgs">PPGS/USP</span></div></td>
+            </tr>
+
+            <tr data-month="11" data-org="nupepa icnova laps ppgs" data-tipo="Ciclo">
+              <td class="td-num">30</td>
+              <td class="td-title">Ferramentas teórico-metodológicas para o estudo sociológico de um filme: o caso do neoliberalismo no cinema hollywoodiano</td>
+              <td class="td-date">19/11, 26/11, 03/11</td>
+              <td class="td-time">—</td>
+              <td><div class="org-tags"><span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span><span class="org-tag tag-icnova">ICNOVA</span><span class="org-tag tag-laps">LAPS</span><span class="org-tag tag-ppgs">PPGS/USP</span></div></td>
+            </tr>
+
+            <tr data-month="11" data-org="eixo métodos" data-tipo="Oficina">
+              <td class="td-num">31</td>
+              <td class="td-title">MÉTODOS – Oficina: Metodologia Quantitativa nas Ciências Sociais</td>
+              <td class="td-date">20/11</td>
+              <td class="td-time">17h30–19h30</td>
+              <td><div class="org-tags"><span class="org-tag tag-metodos">Eixo Métodos</span></div></td>
+            </tr>
+
+          </tbody>
+        </table>
+        <div class="empty-state" id="emptyState">
+          <strong>Nenhuma atividade encontrada</strong>
+          <p>Tente ajustar os filtros para ver mais resultados.</p>
+        </div>
+      </div>
+
+      <!-- LEGENDA -->
+      <div class="legend">
+        <h4>Legenda — Organizações</h4>
+        <div class="legend-grid">
+          <span class="org-tag tag-metodos">Eixo Métodos</span>
+          <span class="org-tag tag-nupepa">NUPEPA/ImaRgens</span>
+          <span class="org-tag tag-laps">LAPS</span>
+          <span class="org-tag tag-icnova">ICNOVA</span>
+          <span class="org-tag tag-ppgs">PPGS/USP</span>
+          <span class="org-tag tag-gpseec">GPSEEC</span>
+          <span class="org-tag tag-gems">GEMS</span>
+          <span class="org-tag tag-urbandata">UrbanData</span>
+          <span class="org-tag tag-luta">Grupo Luta</span>
+          <span class="org-tag tag-pet">PET Ciências Sociais</span>
+          <span class="org-tag tag-cnpq">Grupo CNPq</span>
+          <span class="org-tag tag-nev">NEV</span>
+          <span class="org-tag tag-gesac">GESAC</span>
+          <span class="org-tag tag-nepseste">NEPSESTE</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer id="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="brand-sigla">LAPS</span>
+        <span class="footer-nome">Laboratório de Pesquisa Social</span>
+        <span class="footer-usp">Universidade de São Paulo</span>
+      </div>
+      <div class="footer-links">
+        <h4>Navegação</h4>
+        <ul>
+          <li><a href="sobre.html">Sobre</a></li>
+          <li><a href="equipe.html">Equipe</a></li>
+          <li><a href="eventos.html">Eventos</a></li>
+          <li><a href="contato.html">Contato</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Eixos</h4>
+        <ul>
+          <li><a href="eixo-audiovisual.html">Audiovisual</a></li>
+          <li><a href="eixo-metodos.html">Métodos</a></li>
+          <li><a href="eixo-pesquisa.html">Pesquisa</a></li>
+          <li><a href="eixo-memoria.html">Memória</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h4>Contato</h4>
+        <p>Departamento de Sociologia<br/>FFLCH — USP<br/>São Paulo, SP</p>
+        <a href="contato.html">laps@usp.br</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 LAPS — Laboratório de Pesquisa Social · USP</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    const searchInput  = document.getElementById('searchInput');
+    const filterTipo   = document.getElementById('filterTipo');
+    const filterOrg    = document.getElementById('filterOrg');
+    const filterMes    = document.getElementById('filterMes');
+    const resetBtn     = document.getElementById('resetBtn');
+    const tableBody    = document.getElementById('tableBody');
+    const countVisible = document.getElementById('countVisible');
+    const emptyState   = document.getElementById('emptyState');
+    const rows         = Array.from(tableBody.querySelectorAll('tr'));
+
+    function applyFilters() {
+      const search = searchInput.value.toLowerCase().trim();
+      const tipo   = filterTipo.value.toLowerCase();
+      const org    = filterOrg.value.toLowerCase();
+      const mes    = filterMes.value;
+      let visible  = 0;
+
+      rows.forEach(row => {
+        const title   = row.querySelector('.td-title').textContent.toLowerCase();
+        const rowOrg  = (row.dataset.org  || '').toLowerCase();
+        const rowTipo = (row.dataset.tipo || '').toLowerCase();
+        const rowMes  = (row.dataset.month || '').split(' ');
+
+        const matchSearch = !search || title.includes(search);
+        const matchTipo   = !tipo   || rowTipo === tipo.toLowerCase();
+        const matchOrg    = !org    || rowOrg.includes(org);
+        const matchMes    = !mes    || rowMes.includes(mes);
+
+        if (matchSearch && matchTipo && matchOrg && matchMes) {
+          row.classList.remove('hidden'); visible++;
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+
+      countVisible.textContent = visible;
+      emptyState.classList.toggle('visible', visible === 0);
+    }
+
+    searchInput.addEventListener('input',  applyFilters);
+    filterTipo.addEventListener('change',  applyFilters);
+    filterOrg.addEventListener('change',   applyFilters);
+    filterMes.addEventListener('change',   applyFilters);
+
+    resetBtn.addEventListener('click', () => {
+      searchInput.value = filterTipo.value = filterOrg.value = filterMes.value = '';
+      applyFilters();
+    });
+
+    // Sort by column
+    let sortCol = -1, sortAsc = true;
+    document.querySelectorAll('thead th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = parseInt(th.dataset.col);
+        if (sortCol === col) { sortAsc = !sortAsc; }
+        else { sortCol = col; sortAsc = true; }
+        document.querySelectorAll('thead th').forEach(h => h.classList.remove('sorted-asc','sorted-desc'));
+        th.classList.add(sortAsc ? 'sorted-asc' : 'sorted-desc');
+        [...rows].sort((a, b) => {
+          const aT = a.querySelectorAll('td')[col]?.textContent.trim() || '';
+          const bT = b.querySelectorAll('td')[col]?.textContent.trim() || '';
+          return sortAsc ? aT.localeCompare(bT,'pt') : bT.localeCompare(aT,'pt');
+        }).forEach(r => tableBody.appendChild(r));
+      });
+    });
+  </script>
+</body>
+</html>
